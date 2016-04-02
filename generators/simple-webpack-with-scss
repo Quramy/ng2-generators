@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# __DESCRIPTION__: Simple starter with Sass, Webpack.
+# __DESCRIPTION__: Simple starter with Sass, webpack.
 
 CMD_NAME=`basename $0`
 APP_NAME=$1
