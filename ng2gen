@@ -1,0 +1,127 @@
+#!/bin/sh
+
+PROGNAME=$(basename $0)
+DIRNAME=$(dirname $0)
+VERSION="0.0.1"
+
+subcmd="new"
+
+usage() {
+  cat << EOF
+Usage: $PROGNAME [OPTIONS] [APP_NAME]
+  Project generator for Angualr2.
+
+Options:
+  -h, --help
+      --version
+  -g, --generator [GENERATOR_NAME]
+
+EOF
+  exit 1
+}
+
+get_metadata() {
+  head $1 | grep __DESCRIPTION__ | sed -e "s/^.*__DESCRIPTION__:[ \f\n\r\t]*//"
+}
+
+generate() {
+
+  local app_name=$1
+  local generator_prefix=$2
+
+  if [ "${app_name}" = "." ]; then
+    echo "Generate new Angular2 project.">&2
+    printf "application name: (my-app) ">&2
+    read -t 100 in_name
+    if [ -z "${in_name}" ]; then
+      local app_name="my-app"
+    else
+      local app_name="${in_name}"
+    fi
+  else
+    echo "Generate new Angular2 project to ${app_name}.">&2
+  fi
+
+  if [ -z "${generator_prefix}" ]; then
+    echo "select generator from the following list: ">&2
+    local idx=1
+    local generators=()
+    for generator in $(ls ${DIRNAME}/generators); do
+      local gen_path=${DIRNAME}/generators/${generator}
+      local desc=$(get_metadata ${gen_path})
+      if [ -z "${desc}" ]; then
+        local caption="\t${idx}) ${generator}: (NO DESCRIPTION)"
+      else
+        local caption="\t${idx}) ${generator}: ${desc}"
+      fi
+      echo "${caption}"
+      local generators[$idx]=${gen_path}
+      local idx=$(expr $idx + 1)
+    done
+    printf "\tgenerator number: (1) ">&2
+    read -t 100 in_gen_type 
+    local in_gen_type=$(sed "s/[^0-9]*//g" <<< $in_gen_type)
+    if [ -z "${in_gen_type}" ]; then
+      local in_gen_type=1
+    fi
+    local selected=${generators[$in_gen_type]}
+  else
+    local list=($(ls ${DIRNAME}/generators | grep ${generator_prefix}))
+    local selected=${DIRNAME}/generators/${list[0]}
+  fi
+
+  if [ -f "${selected}" ]; then
+    bash ${selected} ${app_name}
+  else
+    exit 1
+  fi
+}
+
+for OPT in "$@"; do
+  case "$OPT" in
+    '-h'|'--help' )
+      usage
+      exit 1
+      ;;
+    '--version' )
+      echo $VERSION
+      exit 1
+      ;;
+    '-g'|'--generator' )
+      if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+        shift
+      else
+        type_prefix=$2
+        shift 2
+      fi
+      subcmd="new"
+      ;;
+    '-s'|'--scaffold' )
+      if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+        shift
+      else
+        shift 2
+      fi
+      subcmd="scaffold"
+      ;;
+    -*)
+      echo "$PROGNAME: illegal option -- '$(echo $1 | sed 's/^-*//')'" 1>&2
+      exit 1
+      ;;
+    *)
+      if [[ ! -z "$1" ]] && [[ ! "$1" =~ ^-+ ]]; then
+        param+=( "$1" )
+        shift 1
+      fi
+      ;;
+  esac
+done
+
+if [ -z $param ]; then
+  param="."
+fi
+
+generate $param $type_prefix
+
+
+#:vim set ft=sh

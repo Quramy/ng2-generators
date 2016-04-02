@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# __DESCRIPTION__: Simple starter using browserify.
+
 CMD_NAME=`basename $0`
 APP_NAME=$1
 
@@ -18,9 +20,11 @@ echo "Start to create new application '${APP_NAME}'." >&2
 mkdir -p ${APP_NAME}
 
 # install global
-for pkg in "browser-sync webpack dtsm rimraf"; do
-  which ${pkg} > /dev/null || npm -g i ${pkg}
-done
+which dtsm        > /dev/null || npm -g i dtsm
+which rimraf      > /dev/null || npm -g i rimraf
+which tsc         > /dev/null || npm -g i typescript
+which browserify  > /dev/null || npm -g i browserify
+which nf          > /dev/null || npm -g i foreman
 
 pushd ${APP_NAME} > /dev/null
 
@@ -77,8 +81,7 @@ jspm_packages
 ## Ignore downloaded typings
 typings
 
-.built/
-bundle/
+built/
 EOF
 
 ### }}}
@@ -93,8 +96,7 @@ cat << EOF > package.json
   "scripts": {
     "postinstall": "dtsm install",
     "clean": "rimraf bundle",
-    "watch": "node ./node_modules/webpack/bin/webpack.js -w",
-    "prestart": "node ./node_modules/webpack/bin/webpack.js",
+    "prestart": "tsc && browserify -d -o built/bundle.js built/index.js",
     "start": "browser-sync start --server --files bundle/*.js"
   },
   "keywords": [],
@@ -107,11 +109,7 @@ cat << EOF > package.json
     "rxjs": "5.0.0-beta.2",
     "zone.js": "0.6.6"
   },
-  "devDependencies": {
-    "typescript": "^1.8.9",
-    "ts-loader": "^0.8.1",
-    "webpack": "^1.12.14"
-  }
+  "devDependencies": {}
 }
 EOF
 ### }}}
@@ -141,6 +139,12 @@ module.exports = {
   }
 };
 EOF
+
+cat << 'EOF' > Procfile
+web: browser-sync start --server --files built/bundle.js
+typescript: tsc -w
+bundle: watchify -v -o built/bundle.js built/index.js
+EOF
 ### }}}
 
 ### TypeScript {{{
@@ -151,7 +155,7 @@ cat << 'EOF' > tsconfig.json
         "target": "es5",
         "noImplicitAny": false,
         "sourceMap": true,
-        "outDir": ".built",
+        "outDir": "built",
         "rootDir": "src",
         "moduleResolution": "node",
         "experimentalDecorators": true,
@@ -177,7 +181,7 @@ cat << 'EOF' > index.html
 </head>
 <body>
 <my-app>Loading...</my-app>
-<script async src="bundle/client.js"></script>
+<script async src="built/bundle.js"></script>
 </body>
 </html>
 EOF
@@ -232,6 +236,6 @@ npm i || exit 1
 echo "" >&2
 echo "Complete genaration, exec cd ${APP_NAME} and npm start ." >&2
 
-popd 
+popd >/dev/null
 
 #:vim ft=sh
