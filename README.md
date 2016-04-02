@@ -5,6 +5,7 @@ This generates the following project templates:
 
 * Simple project with browserify build
 * Simple project with webpack build
+* Simple project with Sass
 
 
 ## Install
