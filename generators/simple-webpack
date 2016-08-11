@@ -103,16 +103,17 @@ cat << EOF > package.json
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@angular/common":  "2.0.0-rc.1",
-    "@angular/compiler":  "2.0.0-rc.1",
-    "@angular/core":  "2.0.0-rc.1",
-    "@angular/http":  "2.0.0-rc.1",
-    "@angular/platform-browser":  "2.0.0-rc.1",
-    "@angular/platform-browser-dynamic":  "2.0.0-rc.1",
-    "@angular/router":  "2.0.0-rc.1",
-    "@angular/router-deprecated":  "2.0.0-rc.1",
-    "@angular/upgrade":  "2.0.0-rc.1",
-    "es6-shim": "0.35.0",
+    "@angular/common":  "2.0.0-rc.5",
+    "@angular/compiler":  "2.0.0-rc.5",
+    "@angular/core":  "2.0.0-rc.5",
+    "@angular/forms": "0.3.0",
+    "@angular/http":  "2.0.0-rc.5",
+    "@angular/platform-browser":  "2.0.0-rc.5",
+    "@angular/platform-browser-dynamic":  "2.0.0-rc.5",
+    "@angular/router":  "3.0.0-rc.1",
+    "@angular/router-deprecated":  "2.0.0-rc.2",
+    "@angular/upgrade":  "2.0.0-rc.5",
+    "core-js": "^2.4.0",
     "reflect-metadata": "0.1.3",
     "rxjs": "5.0.0-beta.6",
     "zone.js": "0.6.12"
@@ -128,26 +129,26 @@ EOF
 
 ### build script {{{
 cat << 'EOF' > webpack.config.js
-var path = require("path");
+const path = require("path");
 module.exports = {
   resolve: {
-    extensions: ['', '.ts', '.js']
+    extensions: ["", ".ts", ".js"]
   },
   module: {
     loaders: [
-      {test: /.ts$/, loader: 'ts-loader'},
+      {test: /.ts$/, loader: "ts-loader", exclude: /node_modules/},
     ],
     noParse: [
-      path.join(__dirname, 'node_modules/zone.js/dist'),
-      path.join(__dirname, 'node_modules/reflect-metadata/Reflect.js'),
+      path.join(__dirname, "node_modules/zone.js/dist"),
+      path.join(__dirname, "node_modules/reflect-metadata/Reflect.js"),
     ]
   },
   entry: {
     clinet: "./src/index"
   },
   output: {
-    path: path.resolve(__dirname, 'bundle'),
-    filename: 'client.js'
+    path: path.resolve(__dirname, "bundle"),
+    filename: "client.js"
   }
 };
 EOF
@@ -217,17 +218,26 @@ export class MyApp {
 EOF
 
 cat << 'EOF' > src/index.ts
-import 'es6-shim';
+import 'core-js';
 import 'reflect-metadata';
 import 'zone.js/dist/zone';
 import 'rxjs';
 
-import {bootstrap} from '@angular/platform-browser-dynamic';
-import {MyApp} from './app/my-app.component';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
+import { MyApp } from './app/my-app.component';
 
-bootstrap(MyApp).then(() => {
-  console.log('bootstrap done!');
-});
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+
+@NgModule({
+  imports: [ BrowserModule, FormsModule ],
+  declarations: [ MyApp ],
+  bootstrap: [ MyApp ],
+})
+export class AppModule { }
+
+platformBrowserDynamic().bootstrapModule(AppModule);
 EOF
 
 ### }}}
